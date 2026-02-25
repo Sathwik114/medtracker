@@ -1,0 +1,225 @@
+{% extends 'medicines/base.html' %}
+{% block content %}
+
+<!-- ADD EXPENSE FORM -->
+<div class="form-card">
+  <div class="section-title">💸 Add Expense</div>
+  <form method="post" action="{% url 'add_expense' %}">
+    {% csrf_token %}
+    <div class="form-grid">
+
+      <div class="form-group">
+        <label>Title *</label>
+        <input type="text" name="title"
+               placeholder="e.g. Doctor visit, Lab test..."
+               required />
+      </div>
+
+      <div class="form-group">
+        <label>Amount per unit (₹) *</label>
+        <input type="number" name="amount" id="amount-input"
+               placeholder="0.00" step="0.01" min="0" required
+               oninput="updateTotal()" />
+      </div>
+
+      <div class="form-group">
+        <label>Quantity</label>
+        <input type="number" name="quantity" id="quantity-input"
+               placeholder="1" min="1" value="1"
+               oninput="updateTotal()" />
+      </div>
+
+      <div class="form-group">
+        <label>Total Amount</label>
+        <input type="text" id="total-display"
+               value="₹0.00" readonly
+               style="background:rgba(255,255,255,0.05); cursor:not-allowed;" />
+      </div>
+
+      <div class="form-group">
+        <label>Category</label>
+        <select name="category">
+          {% for val, label in categories %}
+            <option value="{{ val }}">{{ label }}</option>
+          {% endfor %}
+        </select>
+      </div>
+
+      <div class="form-group">
+        <label>Date *</label>
+        <input type="date" name="expense_date"
+               value="{% now 'Y-m-d' %}" required />
+      </div>
+
+    </div>
+
+    <div class="form-group" style="margin-bottom:16px;">
+      <label>Note (optional)</label>
+      <textarea name="note"
+                placeholder="Any additional details..."></textarea>
+    </div>
+
+    <button type="submit" class="btn btn-primary">
+      ➕ Add Expense
+    </button>
+  </form>
+</div>
+
+
+<!-- FILTER BAR -->
+<div class="filter-bar">
+  <div style="font-weight:700; font-size:14px; color:var(--blue); white-space:nowrap;">
+    🔍 Filter Expenses
+  </div>
+
+  <form method="get"
+        style="display:flex; gap:12px; flex-wrap:wrap; align-items:flex-end; flex:1;">
+
+    <div class="form-group" style="flex:1; min-width:160px;">
+      <label>By Month</label>
+      <input type="month" name="month"
+             value="{{ filter_month|default:'' }}" />
+    </div>
+
+    <div class="form-group" style="flex:1; min-width:160px;">
+      <label>By Date</label>
+      <input type="date" name="date"
+             value="{{ filter_date|default:'' }}" />
+    </div>
+
+    <div class="form-group" style="flex:1; min-width:140px;">
+      <label>Sort By</label>
+      <select name="sort">
+        <option value="-expense_date" {% if sort == '-expense_date' %}selected{% endif %}>Date (Newest)</option>
+        <option value="expense_date"  {% if sort == 'expense_date'  %}selected{% endif %}>Date (Oldest)</option>
+        <option value="-amount"       {% if sort == '-amount'       %}selected{% endif %}>Amount (High)</option>
+        <option value="amount"        {% if sort == 'amount'        %}selected{% endif %}>Amount (Low)</option>
+        <option value="title"         {% if sort == 'title'         %}selected{% endif %}>Title (A-Z)</option>
+      </select>
+    </div>
+
+    <button type="submit" class="btn btn-primary btn-sm">Apply</button>
+    <a href="{% url 'expenses' %}" class="btn btn-ghost btn-sm">Clear</a>
+
+  </form>
+
+  <!-- PDF DOWNLOAD -->
+  <a href="{% url 'download_expenses_pdf' %}?month={{ filter_month }}&date={{ filter_date }}"
+     class="btn btn-sm"
+     style="background:#e5342a; color:white; white-space:nowrap; text-decoration:none; padding:8px 16px; border-radius:8px; font-weight:700;">
+    📄 Download PDF
+  </a>
+
+</div>
+
+
+{% if expenses %}
+
+<!-- STATS -->
+<div class="stats-grid" style="margin-bottom:24px;">
+
+  <div class="stat-card">
+    <div class="stat-icon">💰</div>
+    <div class="stat-value" style="color:var(--orange);">
+      ₹{{ total|floatformat:2 }}
+    </div>
+    <div class="stat-label">Total Spent</div>
+  </div>
+
+  <div class="stat-card">
+    <div class="stat-icon">📋</div>
+    <div class="stat-value">{{ expenses|length }}</div>
+    <div class="stat-label">Total Entries</div>
+  </div>
+
+  {% for cat, amt in by_category.items %}
+  <div class="stat-card">
+    <div class="stat-icon">📦</div>
+    <div class="stat-value" style="font-size:16px; color:var(--orange);">
+      ₹{{ amt|floatformat:2 }}
+    </div>
+    <div class="stat-label">{{ cat }}</div>
+  </div>
+  {% endfor %}
+
+</div>
+
+
+<!-- EXPENSE TABLE -->
+<div class="section-title">💸 Expense Records</div>
+
+<div class="table-wrapper">
+  <div class="table-scroll">
+    <table>
+      <thead>
+        <tr>
+          <th>#</th>
+          <th>Title</th>
+          <th>Category</th>
+          <th>Qty</th>
+          <th>Unit Price</th>
+          <th>Total</th>
+          <th>Date</th>
+          <th>Note</th>
+          <th>Action</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for exp in expenses %}
+        <tr>
+          <td style="color:var(--muted); font-weight:600;">{{ forloop.counter }}</td>
+          <td style="font-weight:700;">{{ exp.title }}</td>
+          <td>
+            <span class="badge badge-orange">{{ exp.get_category_display }}</span>
+          </td>
+          <td style="font-weight:700; text-align:center;">{{ exp.quantity }}</td>
+          <td style="color:rgba(255,255,255,0.7);">₹{{ exp.amount|floatformat:2 }}</td>
+          <td style="font-weight:800; color:var(--orange);">
+            ₹{% widthratio exp.amount 1 exp.quantity %}
+          </td>
+          <td style="color:rgba(255,255,255,0.6);">{{ exp.expense_date|date:"d M Y" }}</td>
+          <td style="font-size:12px; color:var(--muted);">{{ exp.note|default:"—" }}</td>
+          <td>
+            <form method="post"
+                  action="{% url 'delete_expense' exp.pk %}"
+                  style="display:inline;">
+              {% csrf_token %}
+              <button type="submit" class="btn btn-danger btn-sm"
+                      onclick="return confirm('Delete this expense?')">
+                🗑️
+              </button>
+            </form>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+  <div class="table-footer">
+    <span>{{ expenses|length }} record{{ expenses|length|pluralize }}</span>
+    <span>Total: <strong style="color:var(--orange);">₹{{ total|floatformat:2 }}</strong></span>
+  </div>
+</div>
+
+{% else %}
+
+<div class="empty-state">
+  <div class="empty-icon">💸</div>
+  <div class="empty-title">
+    No expenses yet{% if filter_month or filter_date %} for this period{% endif %}
+  </div>
+  <div class="empty-sub">Add your first expense using the form above</div>
+</div>
+
+{% endif %}
+
+<script>
+function updateTotal() {
+    const amount = parseFloat(document.getElementById('amount-input').value) || 0;
+    const qty = parseInt(document.getElementById('quantity-input').value) || 1;
+    document.getElementById('total-display').value = '₹' + (amount * qty).toFixed(2);
+}
+</script>
+
+{% endblock %}

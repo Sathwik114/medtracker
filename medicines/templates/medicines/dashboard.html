@@ -1,0 +1,714 @@
+{% extends 'medicines/base.html' %}
+{% block content %}
+
+<style>
+/* ================= REGULAR MEDICINES GRID ================= */
+.regular-meds-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 15px;
+    margin-top: 15px;
+}
+
+.regular-meds-card {
+    padding: 16px;
+    border-radius: 12px;
+    background: #1e1e2e;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+    font-size: 14px;
+    color: #e0e0f0;
+    border: 1px solid rgba(255,255,255,0.08);
+}
+
+.regular-meds-card strong {
+    font-size: 16px;
+    color: #ffffff;
+}
+
+.regular-meds-card div {
+    color: #b0b0cc;
+    margin-top: 4px;
+}
+
+/* ================= EMERGENCY MEDICINES GRID (same as regular) ================= */
+.medicine-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 15px;
+    margin-top: 15px;
+}
+
+.medicine-card {
+    padding: 16px;
+    border-radius: 12px;
+    background: #1e1e2e;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+    font-size: 14px;
+    color: #e0e0f0;
+    border: 1px solid rgba(255,71,87,0.2);
+}
+
+.medicine-card strong {
+    font-size: 16px;
+    color: #ffffff;
+}
+
+.medicine-card div {
+    color: #b0b0cc;
+    margin-top: 4px;
+}
+
+/* ================= SEARCH BAR ================= */
+.search-wrapper {
+    margin-top: 30px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.search-wrapper input {
+    flex: 1;
+    max-width: 360px;
+    padding: 10px 16px;
+    border-radius: 10px;
+    border: 1px solid rgba(255,255,255,0.1);
+    background: #1e1e2e;
+    color: #e0e0f0;
+    font-size: 14px;
+    outline: none;
+    transition: border 0.2s;
+}
+
+.search-wrapper input:focus {
+    border-color: #4f46e5;
+}
+
+.search-wrapper input::placeholder {
+    color: #666688;
+}
+
+.search-wrapper .search-icon {
+    font-size: 18px;
+    margin-left: -6px;
+}
+
+#search-count {
+    font-size: 13px;
+    color: #888aaa;
+}
+
+/* ================= FLOATING CHATBOT ================= */
+#chatbot-btn {
+    position: fixed;
+    bottom: 25px;
+    right: 25px;
+    background: #4f46e5;
+    color: white;
+    border: none;
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    font-size: 24px;
+    cursor: pointer;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+    z-index: 1000;
+}
+
+#chatbox {
+    position: fixed;
+    bottom: 100px;
+    right: 25px;
+    width: 320px;
+    height: 420px;
+    background: white;
+    border-radius: 12px;
+    display: none;
+    flex-direction: column;
+    box-shadow: 0 5px 20px rgba(0,0,0,0.2);
+    overflow: hidden;
+    z-index: 1000;
+}
+
+#chat-header {
+    background: #4f46e5;
+    color: white;
+    padding: 12px;
+    font-weight: bold;
+}
+
+#chat-messages {
+    flex: 1;
+    padding: 10px;
+    overflow-y: auto;
+    font-size: 14px;
+}
+
+#chat-input {
+    display: flex;
+    border-top: 1px solid #eee;
+}
+
+#chat-input input {
+    flex: 1;
+    border: none;
+    padding: 10px;
+    outline: none;
+}
+
+#chat-input button {
+    border: none;
+    background: #4f46e5;
+    color: white;
+    padding: 10px 15px;
+    cursor: pointer;
+}
+
+.message-user {
+    text-align: right;
+    margin-bottom: 8px;
+    color: #4f46e5;
+    font-weight: 600;
+}
+
+.message-bot {
+    text-align: left;
+    margin-bottom: 8px;
+    color: #333;
+    white-space: pre-wrap;
+    line-height: 1.5;
+}
+
+/* ================= EMERGENCY MODAL ================= */
+.modal-overlay {
+    display: none;
+    position: fixed;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
+    background: rgba(0,0,0,0.6);
+    z-index: 2000;
+    align-items: center;
+    justify-content: center;
+}
+
+.modal-overlay.active {
+    display: flex;
+}
+
+.modal-box {
+    background: #1e1e2e;
+    border: 1px solid rgba(255,71,87,0.4);
+    border-radius: 16px;
+    padding: 28px;
+    width: 90%;
+    max-width: 420px;
+    color: #e0e0f0;
+    box-shadow: 0 10px 40px rgba(0,0,0,0.5);
+}
+
+.modal-box h3 {
+    margin: 0 0 8px 0;
+    font-size: 18px;
+    color: #ff4757;
+}
+
+.modal-box p {
+    font-size: 13px;
+    color: #b0b0cc;
+    margin-bottom: 16px;
+}
+
+.modal-box textarea {
+    width: 100%;
+    padding: 10px;
+    border-radius: 8px;
+    border: 1px solid rgba(255,255,255,0.1);
+    background: rgba(255,255,255,0.05);
+    color: #e0e0f0;
+    font-size: 14px;
+    resize: vertical;
+    min-height: 80px;
+    box-sizing: border-box;
+    outline: none;
+}
+
+.modal-actions {
+    display: flex;
+    gap: 10px;
+    margin-top: 16px;
+}
+
+.modal-confirm {
+    flex: 1;
+    padding: 10px;
+    background: linear-gradient(135deg, #ff4757, #ff6b35);
+    color: white;
+    border: none;
+    border-radius: 8px;
+    font-weight: 700;
+    cursor: pointer;
+    font-size: 14px;
+}
+
+.modal-cancel {
+    padding: 10px 20px;
+    background: rgba(255,255,255,0.08);
+    color: #b0b0cc;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 14px;
+}
+
+/* Hidden table rows */
+tr.hidden-row {
+    display: none;
+}
+</style>
+
+<!-- ================= EMERGENCY DOSE MODAL ================= -->
+<div class="modal-overlay" id="emergencyModal">
+    <div class="modal-box">
+        <h3>🚨 Emergency Dose</h3>
+        <p id="modal-med-name" style="font-weight:700; color:#fff; font-size:15px; margin-bottom:8px;"></p>
+        <p>Please describe why you are taking this emergency medicine:</p>
+        <textarea id="emergency-cause" placeholder="e.g. Severe headache, fever, chest pain..."></textarea>
+        <div class="modal-actions">
+            <button class="modal-confirm" onclick="confirmEmergency()">💊 Confirm & Take</button>
+            <button class="modal-cancel" onclick="closeModal()">Cancel</button>
+        </div>
+    </div>
+</div>
+
+<!-- ================= AUTO DOSE ALERTS ================= -->
+{% if dose_alerts %}
+<div style="margin-bottom:20px;">
+    {% for alert in dose_alerts %}
+        <div class="alert alert-{{ alert.type }}">
+            {{ alert.msg }}
+        </div>
+    {% endfor %}
+</div>
+{% endif %}
+
+<!-- ================= STATS SECTION ================= -->
+<div class="stats-grid">
+
+    <div class="stat-card">
+        <div class="stat-icon">💊</div>
+        <div class="stat-value">{{ total_meds }}</div>
+        <div class="stat-label">Total Medicines</div>
+    </div>
+
+    <div class="stat-card">
+        <div class="stat-icon">🔵</div>
+        <div class="stat-value">{{ total_regular }}</div>
+        <div class="stat-label">Regular</div>
+    </div>
+
+    <div class="stat-card">
+        <div class="stat-icon">🚨</div>
+        <div class="stat-value">{{ total_emergency }}</div>
+        <div class="stat-label">Emergency</div>
+    </div>
+
+    <div class="stat-card">
+        <div class="stat-icon">⚠️</div>
+        <div class="stat-value" style="color:var(--orange);">
+            {{ low_stock }}
+        </div>
+        <div class="stat-label">Low Stock</div>
+    </div>
+
+    <div class="stat-card">
+        <div class="stat-icon">⛔</div>
+        <div class="stat-value" style="color:var(--red);">
+            {{ finished }}
+        </div>
+        <div class="stat-label">Finished</div>
+    </div>
+
+    <div class="stat-card">
+        <div class="stat-icon">🆘</div>
+        <div class="stat-value" style="color:var(--red);">
+            {{ emergency_doses_today }}
+        </div>
+        <div class="stat-label">Emergency Today</div>
+    </div>
+
+</div>
+
+<!-- ================= SLOT FILTER BUTTONS ================= -->
+<div style="margin-top:25px; display:flex; gap:10px; flex-wrap:wrap;">
+
+    <a href="{% url 'dashboard' %}" 
+       class="btn btn-sm {% if not selected_slot %}btn-primary{% else %}btn-light{% endif %}">
+        All
+    </a>
+
+    <a href="?slot=morning" 
+       class="btn btn-sm {% if selected_slot == 'morning' %}btn-primary{% else %}btn-light{% endif %}">
+        Morning
+    </a>
+
+    <a href="?slot=afternoon" 
+       class="btn btn-sm {% if selected_slot == 'afternoon' %}btn-primary{% else %}btn-light{% endif %}">
+        Afternoon
+    </a>
+
+    <a href="?slot=evening" class="btn btn-sm 
+    {% if selected_slot == 'evening' %}btn-primary{% else %}btn-light{% endif %}">
+        Evening
+    </a>
+
+    <a href="?slot=night" 
+       class="btn btn-sm {% if selected_slot == 'night' %}btn-primary{% else %}btn-light{% endif %}">
+        Night
+    </a>
+
+</div>
+
+<!-- ================= ALL MEDICINES TABLE ================= -->
+{% if medicines %}
+<div style="margin-top:30px;">
+
+    <div class="section-title">
+        🗄️ Medicine Database
+        <span style="font-size:12px;color:var(--muted);">
+            {{ total_meds }} record{{ total_meds|pluralize }}
+        </span>
+    </div>
+
+    <!-- SEARCH BAR -->
+    <div class="search-wrapper">
+        <span class="search-icon">🔍</span>
+        <input
+            type="text"
+            id="med-search"
+            placeholder="Search medicines by name..."
+            oninput="filterTable()"
+            autocomplete="off"
+        >
+        <span id="search-count"></span>
+    </div>
+    <br>
+
+    <div class="table-wrapper">
+        <table id="med-table">
+            <thead>
+                <tr>
+                    <th>#</th>
+                    <th>Name</th>
+                    <th>Type</th>
+                    <th>Price</th>
+                    <th>Total</th>
+                    <th>Remaining</th>
+                    <th>Per Dose</th>
+                    <th>Schedule</th>
+                    <th>Status</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+
+            <tbody id="med-table-body">
+            {% for med in medicines %}
+                <tr data-name="{{ med.name|lower }}">
+                    <td>{{ forloop.counter }}</td>
+
+                    <td>
+                        <strong>{{ med.name }}</strong><br>
+                        <small>{{ med.created_at|date:"d M Y" }}</small>
+                    </td>
+
+                    <td>
+                        {% if med.medicine_type == "regular" %}
+                            <span class="badge badge-blue">Regular</span>
+                        {% else %}
+                            <span class="badge badge-red">Emergency</span>
+                        {% endif %}
+                    </td>
+
+                    <td>₹{{ med.price }}</td>
+                    <td>{{ med.total_tablets }}</td>
+
+                    <td>
+                        {% if med.remaining_tablets == 0 %}
+                            <span class="stock-finished">0</span>
+                        {% elif med.remaining_tablets <= 5 %}
+                            <span class="stock-low">{{ med.remaining_tablets }}</span>
+                        {% else %}
+                            <span class="stock-ok">{{ med.remaining_tablets }}</span>
+                        {% endif %}
+                    </td>
+
+                    <td>{{ med.tablets_per_dose }}</td>
+
+                    <td>
+                        {% if med.medicine_type == "emergency" %}
+                            Anytime
+                        {% else %}
+                            {% for s in med.schedules %}
+                                {{ s|title }}{% if not forloop.last %}, {% endif %}
+                            {% empty %}
+                                —
+                            {% endfor %}
+                        {% endif %}
+                    </td>
+
+                    <td>
+                        {% if med.remaining_tablets == 0 %}
+                            <span class="badge badge-red">Finished</span>
+                        {% elif med.remaining_tablets <= 5 %}
+                            <span class="badge badge-orange">Low</span>
+                        {% else %}
+                            <span class="badge badge-green">OK</span>
+                        {% endif %}
+                    </td>
+
+                    <td>
+                        <a href="{% url 'edit_medicine' med.pk %}" class="btn btn-sm btn-edit">Edit</a>
+                        <br><br>
+                        <a href="{% url 'delete_medicine' med.pk %}" 
+                           class="btn btn-sm btn-danger"
+                           onclick="return confirm('Delete {{ med.name }}?')">
+                           Delete
+                        </a>
+                    </td>
+                </tr>
+            {% endfor %}
+            </tbody>
+
+        </table>
+
+        <!-- No results message -->
+        <div id="no-results" style="display:none; text-align:center; padding:24px; color:#666688; font-size:14px;">
+            😕 No medicines match your search.
+        </div>
+    </div>
+</div>
+{% endif %}
+
+<!-- ================= REGULAR MEDICINES (GRID 3 PER ROW) ================= -->
+{% if regular_meds %}
+<div class="section-title" style="margin-top:40px;">
+    🔵 Regular Medicines
+</div>
+
+<div class="regular-meds-grid">
+{% for med in regular_meds %}
+<div class="regular-meds-card">
+    <strong>{{ med.name }}</strong>
+
+    <div style="margin-top:8px;">
+        {% if med.remaining_tablets == 0 %}
+            <span class="stock-finished">Finished</span>
+        {% elif med.remaining_tablets <= 5 %}
+            <span class="stock-low">{{ med.remaining_tablets }} left</span>
+        {% else %}
+            <span class="stock-ok">{{ med.remaining_tablets }} tablets</span>
+        {% endif %}
+    </div>
+
+    <div>Per Dose: {{ med.tablets_per_dose }}</div>
+
+    {% if med.schedules %}
+    <div>
+        Schedule:
+        {% for s in med.schedules %}
+            {{ s|title }}{% if not forloop.last %}, {% endif %}
+        {% endfor %}
+    </div>
+    {% endif %}
+
+    <div style="margin-top:12px;">
+        <a href="{% url 'edit_medicine' med.pk %}" class="btn btn-sm btn-edit">Edit</a>
+        <a href="{% url 'delete_medicine' med.pk %}" class="btn btn-sm btn-danger">Delete</a>
+    </div>
+</div>
+{% endfor %}
+</div>
+{% endif %}
+
+<!-- ================= EMERGENCY MEDICINES ================= -->
+{% if emergency_meds %}
+<div class="section-title" style="margin-top:40px;">
+    🚨 Emergency Medicines
+</div>
+
+<div class="medicine-grid">
+{% for med in emergency_meds %}
+<div class="medicine-card card-emergency">
+    <strong>{{ med.name }}</strong>
+
+    <div style="margin-top:8px;">
+        {% if med.remaining_tablets == 0 %}
+            <span class="stock-finished">Finished</span>
+        {% else %}
+            <span class="stock-ok">{{ med.remaining_tablets }} tablets</span>
+        {% endif %}
+    </div>
+
+    <div>Per Dose: {{ med.tablets_per_dose }}</div>
+    <div>Schedule: Anytime</div>
+
+    <div style="margin-top:12px;">
+        {% if med.remaining_tablets > 0 %}
+        <button class="btn btn-sm btn-emergency"
+                onclick="openModal({{ med.pk }}, '{{ med.name }}')">
+            🚨 Take Now
+        </button>
+        {% else %}
+            <button class="btn btn-sm btn-emergency" disabled style="opacity:0.5; cursor:not-allowed;">
+                Finished
+            </button>
+        {% endif %}
+    </div>
+
+    <div style="margin-top:8px;">
+        <a href="{% url 'edit_medicine' med.pk %}" class="btn btn-sm btn-edit">Edit</a>
+        <a href="{% url 'delete_medicine' med.pk %}"
+           class="btn btn-sm btn-danger"
+           onclick="return confirm('Delete {{ med.name }}?')">
+           Delete
+        </a>
+    </div>
+</div>
+{% endfor %}
+</div>
+{% endif %}
+
+<!-- ================= EMPTY STATE ================= -->
+{% if not medicines %}
+<div class="empty-state">
+    <h3>No medicines added yet</h3>
+    <a href="{% url 'add_medicine' %}" class="btn btn-primary">
+        Add Medicine
+    </a>
+</div>
+{% endif %}
+
+<!-- ================= FLOATING AI CHATBOT ================= -->
+<button id="chatbot-btn" onclick="toggleChat()">💬</button>
+
+<div id="chatbox">
+    <div id="chat-header">🤖 AI Medical Assistant</div>
+    <div id="chat-messages">
+        <div class="message-bot">Hi! Ask me about any medicine or disease 💊</div>
+    </div>
+    <div id="chat-input">
+        <input type="text" id="user-input" placeholder="Ask about disease or medicine...">
+        <button onclick="sendMessage()">Send</button>
+    </div>
+</div>
+
+<script>
+// ── SEARCH / FILTER TABLE ──
+function filterTable() {
+    const query = document.getElementById('med-search').value.toLowerCase().trim();
+    const rows = document.querySelectorAll('#med-table-body tr');
+    let visible = 0;
+
+    rows.forEach(row => {
+        const name = row.getAttribute('data-name') || '';
+        if (name.includes(query)) {
+            row.classList.remove('hidden-row');
+            visible++;
+        } else {
+            row.classList.add('hidden-row');
+        }
+    });
+
+    const countEl = document.getElementById('search-count');
+    const noResults = document.getElementById('no-results');
+
+    if (query === '') {
+        countEl.textContent = '';
+        noResults.style.display = 'none';
+    } else {
+        countEl.textContent = visible + ' result' + (visible !== 1 ? 's' : '') + ' found';
+        noResults.style.display = visible === 0 ? 'block' : 'none';
+    }
+}
+
+// ── EMERGENCY MODAL ──
+let currentMedPk = null;
+
+function openModal(pk, name) {
+    currentMedPk = pk;
+    document.getElementById('modal-med-name').textContent = '💊 ' + name;
+    document.getElementById('emergency-cause').value = '';
+    document.getElementById('emergencyModal').classList.add('active');
+}
+
+function closeModal() {
+    document.getElementById('emergencyModal').classList.remove('active');
+    currentMedPk = null;
+}
+
+function confirmEmergency() {
+    const cause = document.getElementById('emergency-cause').value.trim();
+    if (!cause) {
+        alert('Please describe the reason for taking this medicine.');
+        return;
+    }
+
+    const form = document.createElement('form');
+    form.method = 'POST';
+    form.action = '/take/' + currentMedPk + '/';
+
+    const csrf = document.createElement('input');
+    csrf.type = 'hidden';
+    csrf.name = 'csrfmiddlewaretoken';
+    csrf.value = '{{ csrf_token }}';
+    form.appendChild(csrf);
+
+    const causeInput = document.createElement('input');
+    causeInput.type = 'hidden';
+    causeInput.name = 'cause';
+    causeInput.value = cause;
+    form.appendChild(causeInput);
+
+    document.body.appendChild(form);
+    form.submit();
+}
+
+// Close modal when clicking outside
+document.getElementById('emergencyModal').addEventListener('click', function(e) {
+    if (e.target === this) closeModal();
+});
+
+// ── CHATBOT ──
+function toggleChat() {
+    const box = document.getElementById("chatbox");
+    box.style.display = box.style.display === "flex" ? "none" : "flex";
+}
+
+async function sendMessage() {
+    const input = document.getElementById("user-input");
+    const message = input.value.trim();
+    if (!message) return;
+
+    const messages = document.getElementById("chat-messages");
+    messages.innerHTML += `<div class="message-user">${message}</div>`;
+    messages.innerHTML += `<div class="message-bot" id="typing">⏳ Thinking...</div>`;
+    messages.scrollTop = messages.scrollHeight;
+    input.value = "";
+
+    try {
+        const response = await fetch(`/ai-chatbot/?message=${encodeURIComponent(message)}`);
+        const data = await response.json();
+        document.getElementById("typing").remove();
+        messages.innerHTML += `<div class="message-bot">🤖 ${data.response}</div>`;
+    } catch (err) {
+        document.getElementById("typing").remove();
+        messages.innerHTML += `<div class="message-bot" style="color:red;">❌ Connection error. Try again.</div>`;
+    }
+
+    messages.scrollTop = messages.scrollHeight;
+}
+
+document.getElementById("user-input").addEventListener("keypress", function(e) {
+    if (e.key === "Enter") sendMessage();
+});
+</script>
+
+{% endblock %}

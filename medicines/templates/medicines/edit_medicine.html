@@ -1,0 +1,194 @@
+{% extends 'medicines/base.html' %}
+{% block content %}
+
+<div class="form-card">
+  <div class="section-title">✏️ Edit — {{ medicine.name }}</div>
+
+  <form method="post">
+    {% csrf_token %}
+
+    <div class="form-grid">
+
+      <!-- Medicine Name -->
+      <div class="form-group">
+        <label>Medicine Name *</label>
+        <input type="text"
+               name="name"
+               value="{{ medicine.name }}"
+               required />
+      </div>
+
+      <!-- Price -->
+      <div class="form-group">
+        <label>Price (₹)</label>
+        <input type="number"
+               name="price"
+               value="{{ medicine.price }}"
+               step="0.01"
+               min="0" />
+      </div>
+
+      <!-- Total Tablets -->
+      <div class="form-group">
+        <label>Total Tablets *</label>
+        <input type="number"
+               name="total_tablets"
+               value="{{ medicine.total_tablets }}"
+               min="0"
+               required />
+      </div>
+
+      <!-- Remaining Tablets (REQUIRED because view expects it) -->
+      <div class="form-group">
+        <label>Remaining Tablets *</label>
+        <input type="number"
+               name="remaining_tablets"
+               value="{{ medicine.remaining_tablets }}"
+               min="0"
+               required />
+      </div>
+
+      <!-- Tablets Per Dose -->
+      <div class="form-group">
+        <label>Tablets Per Dose *</label>
+        <input type="number"
+               name="tablets_per_dose"
+               value="{{ medicine.tablets_per_dose }}"
+               min="1"
+               required />
+      </div>
+
+    </div>
+
+
+    <!-- Medicine Type -->
+    <div class="form-group" style="margin-bottom:20px;">
+      <label>Medicine Type *</label>
+
+      <div class="type-selector">
+
+        <label class="type-option {% if medicine.medicine_type == 'regular' %}selected-regular{% endif %}"
+               id="type-regular-label">
+
+          <input type="radio"
+                 name="medicine_type"
+                 value="regular"
+                 {% if medicine.medicine_type == 'regular' %}checked{% endif %}
+                 required
+                 onchange="updateTypeUI(this)" />
+
+          🔵 Regular (Scheduled)
+        </label>
+
+        <label class="type-option {% if medicine.medicine_type == 'emergency' %}selected-emergency{% endif %}"
+               id="type-emergency-label">
+
+          <input type="radio"
+                 name="medicine_type"
+                 value="emergency"
+                 {% if medicine.medicine_type == 'emergency' %}checked{% endif %}
+                 required
+                 onchange="updateTypeUI(this)" />
+
+          🔴 Emergency (Anytime)
+        </label>
+
+      </div>
+    </div>
+
+
+    <!-- Schedule Section -->
+    <div class="form-group"
+         id="schedule-section"
+         style="margin-bottom:24px; {% if medicine.medicine_type == 'emergency' %}display:none;{% endif %}">
+
+      <label>Schedule</label>
+
+      <div class="schedule-chips">
+
+        <label class="schedule-chip {% if 'morning' in medicine.schedules %}checked{% endif %}"
+               id="chip-morning">
+          <input type="checkbox"
+                 name="schedules"
+                 value="morning"
+                 {% if 'morning' in medicine.schedules %}checked{% endif %}
+                 onchange="updateChip(this,'chip-morning')" />
+          🌅 Morning
+        </label>
+
+        <label class="schedule-chip {% if 'afternoon' in medicine.schedules %}checked{% endif %}"
+               id="chip-afternoon">
+          <input type="checkbox"
+                 name="schedules"
+                 value="afternoon"
+                 {% if 'afternoon' in medicine.schedules %}checked{% endif %}
+                 onchange="updateChip(this,'chip-afternoon')" />
+          ☀️ Afternoon
+        </label>
+
+        <label class="schedule-chip {% if 'evening' in medicine.schedules %}checked{% endif %}"
+               id="chip-evening">
+          <input type="checkbox"
+                 name="schedules"
+                 value="evening"
+                 {% if 'evening' in medicine.schedules %}checked{% endif %}
+                 onchange="updateChip(this,'chip-evening')" />
+          🌆 6 PM
+        </label>
+
+        <label class="schedule-chip {% if 'night' in medicine.schedules %}checked{% endif %}"
+               id="chip-night">
+          <input type="checkbox"
+                 name="schedules"
+                 value="night"
+                 {% if 'night' in medicine.schedules %}checked{% endif %}
+                 onchange="updateChip(this,'chip-night')" />
+          🌙 Night
+        </label>
+
+      </div>
+    </div>
+
+
+    <!-- Buttons -->
+    <div style="display:flex; gap:12px; flex-wrap:wrap;">
+      <button type="submit" class="btn btn-primary">
+        ✅ Update Medicine
+      </button>
+      <a href="{% url 'dashboard' %}" class="btn btn-ghost">
+        Cancel
+      </a>
+    </div>
+
+  </form>
+</div>
+
+{% endblock %}
+
+
+{% block scripts %}
+<script>
+
+function updateTypeUI(radio) {
+  const regularLabel = document.getElementById('type-regular-label');
+  const emergencyLabel = document.getElementById('type-emergency-label');
+  const scheduleSection = document.getElementById('schedule-section');
+
+  regularLabel.className = 'type-option';
+  emergencyLabel.className = 'type-option';
+
+  if (radio.value === 'regular') {
+    regularLabel.classList.add('selected-regular');
+    scheduleSection.style.display = 'block';
+  } else {
+    emergencyLabel.classList.add('selected-emergency');
+    scheduleSection.style.display = 'none';
+  }
+}
+
+function updateChip(cb, id) {
+  document.getElementById(id).classList.toggle('checked', cb.checked);
+}
+
+</script>
+{% endblock %}

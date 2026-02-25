@@ -1,0 +1,143 @@
+{% extends 'medicines/base.html' %}
+{% block content %}
+
+<div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px; flex-wrap:wrap; gap:12px;">
+  <div class="section-title" style="margin-bottom:0;">🕐 Purchase & Refill History</div>
+  <div style="display:flex; gap:10px; flex-wrap:wrap;">
+    {% if med_history %}
+    <form method="post" action="{% url 'clear_history' %}">
+      {% csrf_token %}
+      <button type="submit" class="btn btn-danger btn-sm"
+        onclick="return confirm('Clear all medicine history?')">
+        🗑️ Clear History
+      </button>
+    </form>
+    {% endif %}
+    <a href="{% url 'download_history_pdf' %}?month={{ filter_month }}&date={{ filter_date }}"
+       style="background:#e5342a; color:white; text-decoration:none; padding:8px 16px; border-radius:8px; font-weight:700; font-size:13px;">
+      📄 Download PDF
+    </a>
+  </div>
+</div>
+
+<!-- FILTER BAR -->
+<div class="filter-bar">
+  <div style="font-weight:700; font-size:14px; color:var(--blue); white-space:nowrap;">🔍 Filter</div>
+  <form method="get" style="display:flex; gap:12px; flex-wrap:wrap; align-items:flex-end; flex:1;">
+    <div class="form-group" style="flex:1; min-width:160px;">
+      <label>By Month</label>
+      <input type="month" name="month" value="{{ filter_month }}">
+    </div>
+    <div class="form-group" style="flex:1; min-width:160px;">
+      <label>By Specific Date</label>
+      <input type="date" name="date" value="{{ filter_date }}">
+    </div>
+    <div class="form-group" style="flex:1; min-width:140px;">
+      <label>Sort By</label>
+      <select name="sort">
+        <option value="-created_at" {% if sort == '-created_at' %}selected{% endif %}>Newest First</option>
+        <option value="created_at"  {% if sort == 'created_at'  %}selected{% endif %}>Oldest First</option>
+        <option value="medicine_name" {% if sort == 'medicine_name' %}selected{% endif %}>Medicine Name</option>
+      </select>
+    </div>
+    <button type="submit" class="btn btn-primary btn-sm">Apply</button>
+    <a href="{% url 'history' %}" class="btn btn-ghost btn-sm">Clear</a>
+  </form>
+</div>
+
+<!-- SUMMARY CARDS -->
+<div class="stats-grid" style="margin-bottom:28px;">
+  <div class="stat-card">
+    <div class="stat-icon">🛒</div>
+    <div class="stat-value">{{ total_purchases }}</div>
+    <div class="stat-label">Purchases</div>
+  </div>
+
+  <div class="stat-card">
+    <div class="stat-icon">🔄</div>
+    <div class="stat-value" style="color:var(--green);">{{ total_refills }}</div>
+    <div class="stat-label">Refills</div>
+  </div>
+
+  <div class="stat-card">
+    <div class="stat-icon">🚨</div>
+    <div class="stat-value" style="color:var(--red);">{{ total_emergency }}</div>
+    <div class="stat-label">Emergency Doses</div>
+  </div>
+
+  <div class="stat-card">
+    <div class="stat-icon">💰</div>
+    <div class="stat-value" style="color:var(--orange);">
+      ₹{{ med_spend|floatformat:0 }}
+    </div>
+    <div class="stat-label">Medicine Spend</div>
+  </div>
+
+  <div class="stat-card">
+    <div class="stat-icon">🧾</div>
+    <div class="stat-value" style="color:var(--orange); font-size:20px;">
+      ₹{{ total_spent|floatformat:0 }}
+    </div>
+    <div class="stat-label">Total Spent</div>
+  </div>
+</div>
+
+{% if not med_history %}
+<div class="empty-state">
+  <div class="empty-icon">📋</div>
+  <div class="empty-title">
+    No history{% if filter_month or filter_date %} for this period{% endif %}
+  </div>
+  <div class="empty-sub">
+    History will appear here when you add or refill medicines
+  </div>
+</div>
+{% else %}
+
+<!-- MEDICINE HISTORY -->
+<div class="section-title">💊 Medicine History</div>
+
+<div class="timeline">
+  {% for entry in med_history %}
+  <div class="history-entry {{ entry.entry_type }}">
+    <div class="timeline-dot dot-{{ entry.entry_type }}"></div>
+
+    <div class="history-info">
+      <div class="history-name-row">
+        <span style="font-size:16px;">
+          {% if entry.entry_type == 'purchase' %}🛒
+          {% elif entry.entry_type == 'refill' %}🔄
+          {% elif entry.entry_type == 'dose' %}🚨
+          {% endif %}
+        </span>
+        <span class="history-name">{{ entry.medicine_name }}</span>
+
+        {% if entry.entry_type == 'purchase' %}
+          <span class="badge badge-blue">New Purchase</span>
+        {% elif entry.entry_type == 'refill' %}
+          <span class="badge badge-green">Refill</span>
+        {% elif entry.entry_type == 'dose' %}
+          <span class="badge badge-red">Emergency Dose</span>
+        {% endif %}
+      </div>
+
+      <div class="history-note">{{ entry.note }}</div>
+      <div class="history-time">
+        🕐 {{ entry.created_at|date:"d M Y • h:i A" }}
+      </div>
+    </div>
+
+    <div class="history-price">
+      <div class="history-price-val">
+        {% if entry.price > 0 %}₹{{ entry.price }}{% else %}—{% endif %}
+      </div>
+      <div class="history-tablets">
+        💊 {{ entry.tablets }} tablet(s)
+      </div>
+    </div>
+  </div>
+  {% endfor %}
+</div>
+
+{% endif %}
+{% endblock %}

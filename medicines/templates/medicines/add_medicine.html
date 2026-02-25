@@ -1,0 +1,55 @@
+  {% extends 'medicines/base.html' %}
+  {% block content %}
+  <div class="form-card">
+    <div class="section-title">➕ Add New Medicine</div>
+    <form method="post">
+      {% csrf_token %}
+      <div class="form-grid">
+        <div class="form-group"><label>Medicine Name *</label><input type="text" name="name" placeholder="e.g. Paracetamol 500mg" required/></div>
+        <div class="form-group"><label>Price (₹)</label><input type="number" name="price" placeholder="0.00" step="0.01" min="0"/></div>
+        <div class="form-group"><label>Total Tablets</label><input type="number" name="total_tablets" placeholder="30" min="0"/></div>
+        <div class="form-group"><label>Tablets Per Dose</label><input type="number" name="tablets_per_dose" value="1" min="1"/></div>
+      </div>
+      <div class="form-group" style="margin-bottom:20px;">
+        <label>Medicine Type</label>
+        <div class="type-selector">
+          <label class="type-option selected-regular" id="type-regular-label">
+            <input type="radio" name="medicine_type" value="regular" checked onchange="updateTypeUI(this)"/> 🔵 Regular (Scheduled)
+          </label>
+          <label class="type-option" id="type-emergency-label">
+            <input type="radio" name="medicine_type" value="emergency" onchange="updateTypeUI(this)"/> 🔴 Emergency (Anytime)
+          </label>
+        </div>
+      </div>
+      <div class="form-group" id="schedule-section" style="margin-bottom:24px;">
+        <label>Schedule (select one or more)</label>
+        <div class="schedule-chips">
+          <label class="schedule-chip" id="chip-morning"><input type="checkbox" name="schedules" value="morning" onchange="updateChip(this,'chip-morning')"/>🌅 Morning</label>
+          <label class="schedule-chip" id="chip-afternoon"><input type="checkbox" name="schedules" value="afternoon" onchange="updateChip(this,'chip-afternoon')"/>☀️ Afternoon</label>
+          <label class="schedule-chip" id="chip-evening"><input type="checkbox" name="schedules" value="evening" onchange="updateChip(this,'chip-evening')"/>🌆 6 PM</label>
+          <label class="schedule-chip" id="chip-night"><input type="checkbox" name="schedules" value="night" onchange="updateChip(this,'chip-night')"/>🌙 Night</label>
+        </div>
+      </div>
+      <div style="display:flex; gap:12px; flex-wrap:wrap;">
+        <button type="submit" class="btn btn-primary">💊 Add Medicine</button>
+        <a href="{% url 'dashboard' %}" class="btn btn-ghost">Cancel</a>
+      </div>
+    </form>
+  </div>
+  {% endblock %}
+  {% block scripts %}
+  <script>
+  function updateTypeUI(radio) {
+    document.getElementById('type-regular-label').className = 'type-option';
+    document.getElementById('type-emergency-label').className = 'type-option';
+    if (radio.value === 'regular') {
+      document.getElementById('type-regular-label').classList.add('selected-regular');
+      document.getElementById('schedule-section').style.display = 'block';
+    } else {
+      document.getElementById('type-emergency-label').classList.add('selected-emergency');
+      document.getElementById('schedule-section').style.display = 'none';
+    }
+  }
+  function updateChip(cb, id) { document.getElementById(id).classList.toggle('checked', cb.checked); }
+  </script>
+  {% endblock %}
