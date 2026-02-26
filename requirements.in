@@ -1,6 +1,5 @@
-django==6.0.2
+django==5.1.4
 gunicorn
 python-dotenv
 reportlab
 groq
-
